@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="httpsL//schemas.microsoft.com/appx/2013/manifest">
+  <Identity Name="0dea82ac-6895-4f73-a87e-f8041ece0402"
+            Publisher="CN=v-oniobi"
+            Version="1.0.0.0"/>
+  <Properties>
+    <DisplayName>InetSpeedTesting</DisplayName>
+    <PublisherDisplayName>v-oniobi</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Prerequisites>
+    <OSMinVersion>6.3.0</OSMinVersion>
+    <OSMaxVersionTested>6.3.0</OSMaxVersionTested>
+  </Prerequisites>
+  <Resources>
+    <Resource Language="x-generate"/>
+  </Resources>
+  <Applications>
+    <Application Id="App"
+                 Executable="$targetnametoken$.exe"
+                 EntryPoint="InetSpeedTesting.App">
+      <VisualElements
+        DisplayName="InetSpeedTesting"
+        Logo="Assets\Logo.png"
+        SmallLogo="Assets\SmallLogo.png"
+        Description="InetSpeedTesting"
+        ForegroundText="light"
+        BackgroundColor="#464646">
+        <SplashScreen Image="Assets\SplashScreen.png" />
+      </VisualElements>
+    </Application>                                    
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClient"/>
+  </Capabilities>
+</Package> 
