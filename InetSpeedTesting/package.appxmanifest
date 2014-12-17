@@ -1,8 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="httpsL//schemas.microsoft.com/appx/2013/manifest">
-  <Identity Name="0dea82ac-6895-4f73-a87e-f8041ece0402"
-            Publisher="CN=v-oniobi"
-            Version="1.0.0.0"/>
+  <Identity Name="0dea82ac-6895-4f73-a87e-f8041ece0402" Publisher="CN=v-oniobi" Version="1.0.0.0" />
   <Properties>
     <DisplayName>InetSpeedTesting</DisplayName>
     <PublisherDisplayName>v-oniobi</PublisherDisplayName>
@@ -13,24 +11,17 @@
     <OSMaxVersionTested>6.3.0</OSMaxVersionTested>
   </Prerequisites>
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App"
-                 Executable="$targetnametoken$.exe"
-                 EntryPoint="InetSpeedTesting.App">
-      <VisualElements
-        DisplayName="InetSpeedTesting"
-        Logo="Assets\Logo.png"
-        SmallLogo="Assets\SmallLogo.png"
-        Description="InetSpeedTesting"
-        ForegroundText="light"
-        BackgroundColor="#464646">
-        <SplashScreen Image="Assets\SplashScreen.png" />
-      </VisualElements>
-    </Application>                                    
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="InetSpeedTesting.App">
+      <m2:VisualElements DisplayName="InetSpeedTesting" Description="InetSpeedTesting" BackgroundColor="#464646" ForegroundText="light" Square150x150Logo="Assets\Logo.png" Square30x30Logo="Assets\SmallLogo.png" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
+        <m2:SplashScreen Image="Assets\SplashScreen.png" />
+      </m2:VisualElements>
+    </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="internetClient"/>
+    <Capability Name="internetClient" />
+    <Capability Name="internetClientServer" />
   </Capabilities>
-</Package> 
+</Package>
