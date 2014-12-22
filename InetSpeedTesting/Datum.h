@@ -1,12 +1,13 @@
 namespace InetSpeedTesting
 {
+	[Windows::Foundation::Metadata::WebHostHidden]
 	public ref class Datum sealed
 	{
-		uint16 TestNum;
+		uint32 TestNum;
 		float32 RTT;
 		float32 DownloadBW;
 	public:
-		Datum(uint16, float32, float32);
+		Datum(uint32, float32, float32);
 	};
 }
 

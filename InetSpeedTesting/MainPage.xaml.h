@@ -8,6 +8,7 @@
 #include "MainPage.g.h"
 #include "pplpp.h"
 #include "Datum.h"
+#include <time.h>
 
 using namespace Concurrency;
 using namespace Platform;

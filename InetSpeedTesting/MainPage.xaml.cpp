@@ -73,41 +73,53 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 		}
 	};
 
-	auto handleIntException = [this](task<unsigned int> previousTask)
-	{
-		try { previousTask.get(); }
-		catch (Platform::COMException^ e)
-		{
-			currentSpeed = 0.0;
-			retries--;
-		}
-		catch (task_canceled&)
-		{
-			currentSpeed = 0.0;
-			retries--;
-		}
-	};
-
-	auto procession = [&]()
+	auto procession = []()->Datum^
 	{
 		//_testList->ItemsSource = resultsVector;
 		StreamSocket^ streamSocket = ref new StreamSocket();
 		HostName^ hostName = ref new HostName("google.com");
 		streamSocket->ConnectAsync(hostName, "80", SocketProtectionLevel::PlainSocket);
+		double currentSpeed = streamSocket->Information->RoundTripTimeStatistics.Min / 1000000.0;
 		HttpClient^ httpClient = ref new HttpClient();
-		
+		auto beginTime = clock();
+		auto returnData = create_task(httpClient->GetAsync(ref new Uri("https://a-rest-ed-dev-elopment.azurewebsites.net"))).then([&](HttpResponseMessage^ response)->Datum^
+		{
+			try
+			{
+				auto stream = response->Content->ReadAsInputStreamAsync();
+				auto inputStream = stream->GetResults();
+				Buffer^ buffer = ref new Buffer(2000);
+				auto buf = inputStream->ReadAsync(buffer, buffer->Capacity, InputStreamOptions::Partial);
+				auto readBuffer = buf->GetResults();
+				unsigned int bufferLength = readBuffer->Length;
+				auto endTime = clock();
+				auto timeLapsed = (endTime-beginTime)*10/CLOCKS_PER_SEC;
+				double currentDownloadBandwidth = bufferLength / 1000.0 / timeLapsed;
+				unsigned int vectorSize = 0;
+				return ref new Datum(vectorSize, currentSpeed, currentDownloadBandwidth);
+				
+			}
+			catch (COMException^ e) { currentSpeed = 0.0; }
+		});
+		/*
 		create_task(httpClient->GetAsync(ref new Uri("https://a-rest-ed-dev-elopment.azurewebsites.net")))
-			.then([&](HttpResponseMessage^ response) 
-		{
-			return response->Content->ReadAsInputStreamAsync();
-		}).then([&](IInputStream^ inputStream) 
-		{
-			Buffer^ buffer = ref new Buffer(1400);
-			return inputStream->ReadAsync(buffer, buffer->Capacity, InputStreamOptions::Partial);
-		}).then([&](IBuffer^ readBuffer) 
+			.then([&](HttpResponseMessage^ response)
 		{
 
+			return create_task(response->Content->ReadAsInputStreamAsync()).then([&](IInputStream^ inputStream)
+			{
+				Buffer^ buffer = ref new Buffer(2000);
+				return create_task(inputStream->ReadAsync(buffer, buffer->Capacity, InputStreamOptions::Partial)).then([&](IBuffer^ readBuffer)
+				{
+					unsigned int finishTime = time(NULL);
+					if (finishTime - startTime == 0) return;
+					currentDownloadBandwidth += readBuffer->Length / 1000.0 / (finishTime - startTime);
+					Datum^ datum = ref new Datum(resultsVector->Size, currentSpeed, currentDownloadBandwidth);
+					resultsVector->Append(datum);
+				});
+			});
 		});
+		*/
 		/*
 		for (; retries > 0;)
 		{
@@ -128,6 +140,7 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 			retries--;
 		}
 		*/
+		return returnData.get();
 	};
 	//---------------------------------------------------------------------------------------------------------------------------------------------
 	//Lambdas created
@@ -135,5 +148,9 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 	//Main execution flow
 	//--------------------------
 	setup();
-	procession();
+	create_task(create_async([&procession]{return procession(); })).then([this](Datum^ datum)
+	{
+		resultsVector->Append(datum);
+	});
+	
 }
