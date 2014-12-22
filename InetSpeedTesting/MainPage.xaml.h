@@ -26,6 +26,7 @@ using namespace Windows::UI::Xaml::Data;
 using namespace Windows::UI::Xaml::Input;
 using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
+using namespace Windows::Web::Http;
 
 namespace InetSpeedTesting
 {
@@ -40,7 +41,6 @@ namespace InetSpeedTesting
 	private:
 		void Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		double currentSpeed;
-		double currentUploadBandwidth;
 		double currentDownloadBandwidth;
 		double payloadLength;
 		int retries;
@@ -55,3 +55,5 @@ namespace InetSpeedTesting
 		String^ _socketTcpWellKnownHostNames[4];
 	};
 }
+
+using namespace InetSpeedTesting;

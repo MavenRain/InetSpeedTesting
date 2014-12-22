@@ -5,8 +5,6 @@
 
 #include "pch.h"
 #include "MainPage.xaml.h"
-#define DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION ";"
-using namespace InetSpeedTesting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -24,11 +22,11 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 	auto setup = [&]()
 	{
 		currentSpeed = 0.0;
-		currentUploadBandwidth = 0.0;
 		currentDownloadBandwidth = 0.0;
 		payloadLength = 1024;
-		retries = 4;
+		//retries = 4;
 		resultsVector = ref new Vector<Datum^>();
+		_testList->ItemsSource = resultsVector;
 		task_timeout_ms = 400;
 		std::chrono::milliseconds timeout(task_timeout_ms);
 
@@ -92,18 +90,24 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 
 	auto procession = [&]()
 	{
-		setup();
 		//_testList->ItemsSource = resultsVector;
 		StreamSocket^ streamSocket = ref new StreamSocket();
 		HostName^ hostName = ref new HostName("google.com");
 		streamSocket->ConnectAsync(hostName, "80", SocketProtectionLevel::PlainSocket);
-		DataWriter^ dataWriter = ref new DataWriter(streamSocket->OutputStream);
-		dataWriter->WriteString(aggregate);
-		create_task(dataWriter->StoreAsync()).then([](task<unsigned int> previousTask)
-		{ try{ previousTask.get(); }
-		catch (COMException^ ex) {}
-	
-		},task_continuation_context::use_current());
+		HttpClient^ httpClient = ref new HttpClient();
+		
+		create_task(httpClient->GetAsync(ref new Uri("https://a-rest-ed-dev-elopment.azurewebsites.net")))
+			.then([&](HttpResponseMessage^ response) 
+		{
+			return response->Content->ReadAsInputStreamAsync();
+		}).then([&](IInputStream^ inputStream) 
+		{
+			Buffer^ buffer = ref new Buffer(1400);
+			return inputStream->ReadAsync(buffer, buffer->Capacity, InputStreamOptions::Partial);
+		}).then([&](IBuffer^ readBuffer) 
+		{
+
+		});
 		/*
 		for (; retries > 0;)
 		{
@@ -130,5 +134,6 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 
 	//Main execution flow
 	//--------------------------
+	setup();
 	procession();
 }
