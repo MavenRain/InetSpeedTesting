@@ -41,19 +41,6 @@ namespace InetSpeedTesting
 
 	private:
 		void Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
-		double currentSpeed;
-		double currentDownloadBandwidth;
-		double payloadLength;
-		int retries;
-		Vector<Datum^>^ resultsVector;
-		String^ aggregate;
-		StreamSocket^ clientSocket[4];
-		DataWriter^ writer[4];
-		//tasks must complete in a fixed amount of time, cancel otherwise..
-		timed_cancellation_token_source tcs[4];
-		long long task_timeout_ms;
-		std::chrono::milliseconds timeout;
-		String^ _socketTcpWellKnownHostNames[4];
 	};
 }
 
