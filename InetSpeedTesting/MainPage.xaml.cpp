@@ -17,70 +17,42 @@ MainPage::MainPage()
 void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	
-	//Lambda flow
-	//-------------------------------------------------------------------------------------
-
-	auto currentSpeed = [] 
+	auto flow = [this]
 	{
-		HostName^ hostNames[] = {ref new HostName(ref new String(L"google.com")),ref new HostName(ref new String(L"bing.com")), ref new HostName(ref new String(L"facebook.com")),ref new HostName(ref new String(L"twitter.com"))};
-		auto retries = 4;
-		float32 _currentSpeed = 0.0;
-		for (auto i = 0; i < retries; i++) 
+		StreamSocket^ socket = ref new StreamSocket();
+		Array<String^>^ hostNames = ref new Array<String^>{ "google.com","bing.com","facebook.com","yahoo.com" };
+		unsigned int hostNamesSize = 4;
+		Vector<Datum^>^ resultsVector = ref new Vector<Datum^>();
+		_testList->ItemsSource = resultsVector;
+		auto procession = [socket, resultsVector, hostNames](unsigned int hosts) mutable
 		{
-			StreamSocket^ streamSocket = ref new StreamSocket();
-			streamSocket->Control->NoDelay = true;
-			streamSocket->Control->QualityOfService = SocketQualityOfService::LowLatency;
-			streamSocket->Control->KeepAlive = false;
-			create_task(streamSocket->ConnectAsync(hostNames[i], "80", SocketProtectionLevel::PlainSocket)).then([&](void)
+			return create_task(socket->ConnectAsync(ref new HostName(hostNames[hosts]), ref new String(L"80")))
+				.then([socket, resultsVector, hosts]() mutable
 			{
-				_currentSpeed += streamSocket->Information->RoundTripTimeStatistics.Min / 1000000;
-			});
-			
-			delete streamSocket;
-		};
-		return _currentSpeed/retries;
-	};
-
-	auto downloadBandwidth = [] 
-	{
-		Uri^ uri[] = { ref new Uri(ref new String(L"http://www.google.com")),ref new Uri(ref new String(L"http://www.bing.com")),ref new Uri(ref new String(L"http://www.facebook.com")),ref new Uri(ref new String(L"http://www.twitter.com")) };
-		auto retries = 4;
-		float32 _downloadBandwidth = 0.0;
-		float32 timeElapsed = 0.0;
-		HttpClient^ httpClient = ref new HttpClient();
-		for (auto i = 0; i < retries; i++)
-		{
-			auto beginTime = clock();
-			clock_t endTime = 0;
-			create_task(httpClient->GetAsync(uri[i])).then([&beginTime, &endTime, &timeElapsed](HttpResponseMessage^ response)
-			{
-				endTime = clock();
-				timeElapsed = (endTime - beginTime) * 10 / CLOCKS_PER_SEC;
-				return response->Content->ReadAsInputStreamAsync();
-			}).then([](IInputStream^ inputStream)
-			{
-				IBuffer^ buffer = ref new Buffer(10000);
-				return inputStream->ReadAsync(buffer, buffer->Capacity, InputStreamOptions::Partial);
-			}).then([&_downloadBandwidth, &timeElapsed](IBuffer^ readBuffer)
-			{
-				if (timeElapsed <= 0) return;
-				_downloadBandwidth += readBuffer->Length / 1000 / timeElapsed;
+				float32 speed = socket->Information->RoundTripTimeStatistics.Min / 1000000.0F;
+				String^ possible("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+				String^ aggregate = "";
+				unsigned int payloadSize = 4800;
+				for (unsigned int i = 0; i < payloadSize; i++, aggregate += possible->Begin()[rand() % possible->Length()]);
+				DataWriter^ dataWriter = ref new DataWriter(socket->OutputStream);
+				dataWriter->WriteString(aggregate);
+				auto beginTime = clock();
+				create_task(dataWriter->StoreAsync()).then([beginTime, speed, socket, resultsVector, payloadSize, hosts](unsigned int previousTask) mutable
+				{
+					auto endTime = clock();
+					auto uploadBandwidth = payloadSize / (float32)(endTime - beginTime) / 10 * CLOCKS_PER_SEC / 1024;
+					if (socket->Information->BandwidthStatistics.OutboundBandwidthPeaked == true) resultsVector->Append(ref new Datum(hosts, speed, socket->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
+					else resultsVector->Append(ref new Datum(hosts, speed, uploadBandwidth));
+				});
 			});
 		};
-		return _downloadBandwidth / retries;
+		//procession(0);
+		procession(2);
 	};
 
-	//---------------------------------------------------------------------------------------------------------------------------------------------
-	//End lambda flow
-
-	//Main execution flow
-	//----------------------------------------------------------------------------
-	Vector<Datum^>^ resultsVector = ref new Vector<Datum^>();
-	_testList->ItemsSource = resultsVector;
-	for (auto j = 0; j < 4; j++)
-	{
-		resultsVector->Append(ref new Datum(j, currentSpeed(), downloadBandwidth()));
-	};
-	//----------------------------------------------------------------------------
-	//End main execution flow
+	// Main execution flow
+	//--------------------
+	flow();
 }
+
+

@@ -9,11 +9,13 @@
 #include "pplpp.h"
 #include "Datum.h"
 #include <time.h>
+#include <string>
 
 using namespace Concurrency;
 using namespace Platform;
 using namespace Platform::Collections;
 using namespace pplpp;
+using namespace Windows::ApplicationModel::Core;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Networking;
