@@ -45,14 +45,14 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 					//for (unsigned int i = 1; i < writer->Length; i++) writer[i]->StoreAsync();
 					auto uploadBandwidth = payloadSize / (float32)(endTime - beginTime) / 10 * CLOCKS_PER_SEC / 1024;
 					if (streamSocket[0]->Information->BandwidthStatistics.OutboundBandwidthPeaked == true) resultsVector->Append(ref new Datum(0, streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F, streamSocket[0]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
-					else resultsVector->Append(ref new Datum(0, streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F, uploadBandwidth));
-					for (unsigned int i = 1; i < streamSocket->Length; i++) resultsVector->Append(ref new Datum(i, streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F,streamSocket[i]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
-				});
+					else resultsVector->Append(ref new Datum(1, streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F, uploadBandwidth));
+					for (unsigned int i = 1; i < streamSocket->Length; i++) resultsVector->Append(ref new Datum(i+1, streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F,streamSocket[i]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
+				}).then([](task<void> previousTask) {try { previousTask.get(); } catch (COMException^ ex) { }});
+				delete writer;
 			});
 		};
 		procession();
 	};
-
 	// Main execution flow
 	//--------------------
 	flow();
