@@ -20,6 +20,7 @@ using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Networking;
 using namespace Windows::Networking::Sockets;
+using namespace Windows::Storage;
 using namespace Windows::Storage::Streams;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;

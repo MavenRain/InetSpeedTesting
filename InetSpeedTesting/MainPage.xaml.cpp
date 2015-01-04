@@ -19,16 +19,16 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 	
 	auto flow = [this]
 	{
-		unsigned int _trials = 100;
+		unsigned int _trials = 1000;
 		Array<StreamSocket^>^ streamSocket = ref new Array<StreamSocket^>(_trials);
 		for (unsigned int i = 0; i < streamSocket->Length; i++) streamSocket[i] = ref new StreamSocket();
 		Array<String^>^ hostNames = ref new Array<String^>{ "google.com","abc.com","bing.com","msn.com"};
 		Vector<Datum^>^ resultsVector = ref new Vector<Datum^>();
 		_testList->ItemsSource = resultsVector;
-		auto procession = [streamSocket, resultsVector, hostNames, _trials]() mutable
+		auto procession = [streamSocket, resultsVector, hostNames, _trials, this]() mutable
 		{
 			return create_task(streamSocket[0]->ConnectAsync(ref new HostName(hostNames[0]), ref new String(L"80")))
-				.then([streamSocket, resultsVector, hostNames, _trials]() mutable
+				.then([streamSocket, resultsVector, hostNames, _trials, this]() mutable
 			{
 				for (unsigned int i = 1; i < streamSocket->Length; i++) streamSocket[i]->ConnectAsync(ref new HostName(hostNames[(i+1) % hostNames->Length]), ref new String(L"80"));
 				String^ possible("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -39,14 +39,26 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 				for (unsigned int i = 0; i < writer->Length; i++) writer[i] = ref new DataWriter(streamSocket[i]->OutputStream);
 				for (unsigned int i = 0; i < writer->Length; i++) writer[i]->WriteString(aggregate);
 				auto beginTime = clock();
-				create_task(writer[0]->StoreAsync()).then([beginTime, streamSocket, writer, resultsVector, payloadSize](unsigned int previousTask) mutable
+				create_task(writer[0]->StoreAsync()).then([beginTime, streamSocket, writer, resultsVector, payloadSize, _trials, this](unsigned int previousTask) mutable
 				{
 					auto endTime = clock();
 					//for (unsigned int i = 1; i < writer->Length; i++) writer[i]->StoreAsync();
 					auto uploadBandwidth = payloadSize / (float32)(endTime - beginTime) / 10 * CLOCKS_PER_SEC / 1024;
-					if (streamSocket[0]->Information->BandwidthStatistics.OutboundBandwidthPeaked == true) resultsVector->Append(ref new Datum(0, streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F, streamSocket[0]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
-					else resultsVector->Append(ref new Datum(1, streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F, uploadBandwidth));
-					for (unsigned int i = 1; i < streamSocket->Length; i++) resultsVector->Append(ref new Datum(i+1, streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F,streamSocket[i]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
+					float32 speedTotal = streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F;
+					if (streamSocket[0]->Information->BandwidthStatistics.OutboundBandwidthPeaked == true) resultsVector->Append(ref new Datum(1, speedTotal, streamSocket[0]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
+					else resultsVector->Append(ref new Datum(1, speedTotal, uploadBandwidth));
+					for (unsigned int i = 1; i < streamSocket->Length; i++)
+					{
+						speedTotal += streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F;
+						resultsVector->Append(ref new Datum(i + 1, streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F, streamSocket[i]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
+					}
+					create_task(KnownFolders::PicturesLibrary->CreateFileAsync(L"sample.txt",CreationCollisionOption::ReplaceExisting))
+						.then([speedTotal,_trials, this](StorageFile^ storageFile)
+					{
+						String^ statistics = "Mean Round Trip Time: " + speedTotal + "\n";
+						FileIO::WriteTextAsync(storageFile, statistics);
+						_meanRTT->Text = (speedTotal / (float32)_trials).ToString();
+					});
 				}).then([](task<void> previousTask) {try { previousTask.get(); } catch (COMException^ ex) { }});
 				delete writer;
 			});
