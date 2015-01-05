@@ -19,7 +19,11 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 	
 	auto flow = [this]
 	{
-		unsigned int _trials = 1000;
+		std::wstring wString(_trialsBox->Text->Data());
+		std::wstringstream wss;
+		wss << wString;
+		unsigned int _trials;
+		wss >> _trials;
 		Array<StreamSocket^>^ streamSocket = ref new Array<StreamSocket^>(_trials);
 		for (unsigned int i = 0; i < streamSocket->Length; i++) streamSocket[i] = ref new StreamSocket();
 		Array<String^>^ hostNames = ref new Array<String^>{ "google.com","abc.com","bing.com","msn.com"};

@@ -10,6 +10,7 @@
 #include "Datum.h"
 #include <time.h>
 #include <string>
+#include <sstream>
 
 using namespace Concurrency;
 using namespace Platform;
