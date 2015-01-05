@@ -24,6 +24,7 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 		wss << wString;
 		unsigned int _trials;
 		wss >> _trials;
+		if (_trials < 1) _trials = 1;
 		Array<StreamSocket^>^ streamSocket = ref new Array<StreamSocket^>(_trials);
 		for (unsigned int i = 0; i < _trials; i++) streamSocket[i] = ref new StreamSocket();
 		Array<String^>^ hostNames = ref new Array<String^>{ "google.com","abc.com","bing.com","msn.com"};
@@ -37,7 +38,7 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 				for (unsigned int i = 1; i < _trials; i++) streamSocket[i]->ConnectAsync(ref new HostName(hostNames[(i+1) % hostNames->Length]), ref new String(L"80"));
 				String^ possible("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 				String^ aggregate = "";
-				unsigned int payloadSize = 9600;
+				unsigned int payloadSize = 1400;
 				for (unsigned int i = 0; i < payloadSize; i++, aggregate += possible->Begin()[rand() % possible->Length()]);
 				Array<DataWriter^>^ writer = ref new Array<DataWriter^>(_trials);
 				for (unsigned int i = 0; i < _trials; i++)
@@ -46,20 +47,15 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 					writer[i]->WriteString(aggregate);
 					if (i!=0) writer[i]->StoreAsync();
 				}
-				auto beginTime = clock();
-				create_task(writer[0]->StoreAsync()).then([beginTime, streamSocket, writer, resultsVector, payloadSize, _trials, this](unsigned int previousTask) mutable
+				create_task(writer[0]->StoreAsync()).then([streamSocket, writer, resultsVector, payloadSize, _trials, this](unsigned int previousTask) mutable
 				{
-					auto endTime = clock();
-					auto uploadBandwidth = payloadSize / (float32)(endTime - beginTime) / 10 * CLOCKS_PER_SEC / 1024;
-					float32 speedTotal = streamSocket[0]->Information->RoundTripTimeStatistics.Min / 1000000.0F;
-					if (streamSocket[0]->Information->BandwidthStatistics.OutboundBandwidthPeaked == true) resultsVector->Append(ref new Datum(1, speedTotal, streamSocket[0]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
-					else resultsVector->Append(ref new Datum(1, speedTotal, uploadBandwidth));
-					for (unsigned int i = 1; i < _trials; i++)
+					float32 speedTotal = 0;
+					float32 variance = 0;
+					for (unsigned int i = 0; i < _trials; i++)
 					{
 						speedTotal += streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F;
-						resultsVector->Append(ref new Datum(i + 1, streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F, streamSocket[i]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F));
+						resultsVector->Append(ref new Datum(i + 1, streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F, streamSocket[i]->Information->BandwidthStatistics.OutboundBitsPerSecond / 1024.0F / 1024.0F));
 					}
-					float32 variance = 0;
 					for (unsigned int i = 0; i < _trials; i++) variance += (streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F - speedTotal / _trials) * (streamSocket[i]->Information->RoundTripTimeStatistics.Min / 1000000.0F - speedTotal / _trials);
 					variance /= _trials - 1;
 					create_task(KnownFolders::PicturesLibrary->CreateFileAsync(L"sample.txt",CreationCollisionOption::ReplaceExisting))
