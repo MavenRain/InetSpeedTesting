@@ -37,9 +37,15 @@
             </ListView.ItemTemplate>
         </ListView>
         <Button Content="Run Test" FontSize="28" Grid.Column="1" HorizontalAlignment="Left" Height="274" Margin="7,7,0,0" Grid.Row="3" VerticalAlignment="Top" Width="442" Click="Button_Click"/>
-        <TextBlock x:Name="_meanRTT" FontSize="29" HorizontalAlignment="Stretch" Margin="241,91,41,0" Grid.Row="3" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Height="69" Grid.Column="2"/>
+        <TextBlock x:Name="_meanRTT" FontSize="29" HorizontalAlignment="Stretch" Margin="240,91,42,0" Grid.Row="3" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Height="69" Grid.Column="2"/>
         <TextBlock x:Name="RTTTitle" FontSize="29" HorizontalAlignment="Left" Margin="49,91,0,0" Grid.Row="3" TextWrapping="Wrap" Text="RTT Average" VerticalAlignment="Top" Height="56" Grid.Column="2"/>
         <TextBlock x:Name="TrialsBlock" FontSize="29" HorizontalAlignment="Left" Margin="43,91,0,0" Grid.Row="3" TextWrapping="Wrap" Text="# of trials" VerticalAlignment="Top" Height="69" Width="128"/>
         <TextBox x:Name="_trialsBox" HorizontalAlignment="Center" FontSize="29" Margin="186,91,53,0" Grid.Row="3" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Height="56" Width="216"/>
+        <TextBlock x:Name="RTTTitle_Copy" FontSize="29" HorizontalAlignment="Left" Margin="49,171,0,0" Grid.Row="3" TextWrapping="Wrap" VerticalAlignment="Top" Height="56" Grid.Column="2">
+        	<Run Text="RTT Variance"/>
+        	<LineBreak/>
+        	<Run/>
+        </TextBlock>
+        <TextBlock x:Name="_varianceRTT" FontSize="29" HorizontalAlignment="Stretch" Margin="240,171,42,0" Grid.Row="3" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Height="69" Grid.Column="2"/>
     </Grid>
 </Page>
