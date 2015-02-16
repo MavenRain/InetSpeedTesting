@@ -26,28 +26,37 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 		wss >> _trials;
 		if (_trials < 1) _trials = 1;
 		Array<StreamSocket^>^ streamSocket = ref new Array<StreamSocket^>(_trials);
-		for (unsigned int i = 0; i < _trials; i++) streamSocket[i] = ref new StreamSocket();
+		for (unsigned int i = 0; i < _trials; i++) create_task([streamSocket,i] {streamSocket[i] = ref new StreamSocket(); });
 		Array<String^>^ hostNames = ref new Array<String^>{ "google.com","abc.com","bing.com","msn.com"};
 		Vector<Datum^>^ resultsVector = ref new Vector<Datum^>();
 		_testList->ItemsSource = resultsVector;
 		auto procession = [streamSocket, resultsVector, hostNames, _trials, this]() mutable
 		{
-			return create_task(streamSocket[0]->ConnectAsync(ref new HostName(hostNames[0]), ref new String(L"80")))
+			cancellation_token_source cts;
+			TimeSpan delay;
+			delay.Duration = 40000000;
+			ThreadPoolTimer^ delayTimer = ThreadPoolTimer::CreateTimer(ref new TimerElapsedHandler([cts](ThreadPoolTimer^ timer)
+			{
+				cts.cancel();
+			}), delay);
+			vector<task<void>> connectTask;
+			for (unsigned int i = 0; i < _trials; i++) connectTask.push_back(create_task(streamSocket[i]->ConnectAsync(ref new HostName(hostNames[(i + 1) % hostNames->Length]), ref new String(L"80")),cts.get_token()));
+			return when_all(begin(connectTask),end(connectTask))
 				.then([streamSocket, resultsVector, hostNames, _trials, this]() mutable
 			{
-				for (unsigned int i = 1; i < _trials; i++) streamSocket[i]->ConnectAsync(ref new HostName(hostNames[(i+1) % hostNames->Length]), ref new String(L"80"));
 				String^ possible("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 				String^ aggregate = "";
 				unsigned int payloadSize = 1400;
 				for (unsigned int i = 0; i < payloadSize; i++, aggregate += possible->Begin()[rand() % possible->Length()]);
 				Array<DataWriter^>^ writer = ref new Array<DataWriter^>(_trials);
-				for (unsigned int i = 0; i < _trials; i++)
+				vector<task<unsigned int>> writeTask;
+				for (unsigned int i = 0; i < _trials; i++) writeTask.push_back(create_task([aggregate,i,streamSocket,writer]
 				{
 					writer[i] = ref new DataWriter(streamSocket[i]->OutputStream);
 					writer[i]->WriteString(aggregate);
-					if (i!=0) writer[i]->StoreAsync();
-				}
-				create_task(writer[0]->StoreAsync()).then([streamSocket, writer, resultsVector, payloadSize, _trials, this](unsigned int previousTask) mutable
+					return writer[i]->StoreAsync(); 
+				}));
+				when_all(begin(writeTask),end(writeTask)).then([streamSocket, writer, resultsVector, payloadSize, _trials, this](vector<unsigned int> previousTask) mutable
 				{
 					float32 speedTotal = 0;
 					float32 variance = 0;
@@ -67,7 +76,7 @@ void InetSpeedTesting::MainPage::Button_Click(Platform::Object^ sender, Windows:
 						_meanRTT->Text = (speedTotal / (float32)_trials).ToString();
 						_varianceRTT->Text = variance.ToString();
 					});
-				}).then([](task<void> previousTask) {try { previousTask.get(); } catch (COMException^ ex) { }});
+				}).then([](task<void> previousTask) {try { previousTask.get(); } catch (COMException^ ex) {} catch (task_canceled&) {}});
 				delete writer;
 			});
 		};

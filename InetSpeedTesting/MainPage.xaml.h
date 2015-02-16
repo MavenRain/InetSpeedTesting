@@ -11,11 +11,13 @@
 #include <time.h>
 #include <string>
 #include <sstream>
+#include <vector>
 
 using namespace Concurrency;
 using namespace Platform;
 using namespace Platform::Collections;
 using namespace pplpp;
+using namespace std;
 using namespace Windows::ApplicationModel::Core;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
@@ -23,6 +25,7 @@ using namespace Windows::Networking;
 using namespace Windows::Networking::Sockets;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Streams;
+using namespace Windows::System::Threading;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Controls::Primitives;
